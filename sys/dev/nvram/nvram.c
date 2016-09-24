@@ -90,20 +90,27 @@ nvram_open(struct cdev *dev __unused, int flags, int fmt __unused,
 static int
 nvram_read(struct cdev *dev, struct uio *uio, int flags)
 {
+	return nvram_read_range(dev, uio, flags, 1);
+}
+
+static int 
+nvram_read_range(struct cdev *dev, struct uio *uio, int flags, long count) 
+{
 	int nv_off;
 	u_char v;
-	int error = 0;
+	int error = 0;	
+	int bytesRead = 0;
 
-	while (uio->uio_resid > 0 && error == 0) {
+	while (bytesRead < count && uio->uio_resid > 0 && error == 0) {
 		nv_off = uio->uio_offset + NVRAM_FIRST;
 		if (nv_off < NVRAM_FIRST || nv_off >= NVRAM_LAST)
 			return (0);	/* Signal EOF */
 		/* Single byte at a time */
 		v = rtcin(nv_off);
 		error = uiomove(&v, 1, uio);
+		bytesRead++;
 	}
 	return (error);
-
 }
 
 static int
